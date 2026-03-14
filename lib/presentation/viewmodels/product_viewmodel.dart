@@ -10,31 +10,48 @@ class ProductViewModel extends ChangeNotifier {
   ProductViewModel(this._repository);
   
   ProductState get state => _state;
+
+  bool get isLoading => _state.isLoading;
+  bool get hasError => _state.hasError;
+  bool get hasProducts => _state.hasProducts;
+  String? get error => _state.error;
+  List<Product> get products => _state.products;
   
   Future<void> loadProducts() async {
     _updateState(isLoading: true, error: null);
     
     try {
       final products = await _repository.getProducts();
-      _updateState(isLoading: false, products: products);
+      _updateState(
+        isLoading: false, 
+        products: products,
+      );
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Failure: ')) {
+        errorMessage = errorMessage.replaceFirst('Failure: ', '');
+      }
       _updateState(
         isLoading: false,
-        error: e.toString().replaceAll('Failure: ', ''),
+        error: errorMessage,
       );
     }
   }
+  
+  Future<void> retry() => loadProducts();
   
   void _updateState({
     bool? isLoading,
     List<Product>? products,
     String? error,
+    bool? isFromCache,
   }) {
     _state = _state.copyWith(
       isLoading: isLoading,
       products: products,
       error: error,
+      isFromCache: isFromCache,
     );
-    notifyListeners();
+    notifyListeners();  
   }
 }

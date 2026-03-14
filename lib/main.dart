@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/network/http_client.dart';
 import 'data/datasources/product_remote_datasource.dart';
+import 'data/datasources/product_cache_datasource.dart';
 import 'data/repositories/product_repository_impl.dart';
 import 'presentation/pages/product_page.dart';
 import 'presentation/viewmodels/product_viewmodel.dart';
@@ -17,7 +18,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Produtos App',
+      title: 'Produtos App v2',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -25,9 +27,15 @@ class MyApp extends StatelessWidget {
       home: ChangeNotifierProvider(
         create: (context) {
           final httpClient = HttpClient();
-          final datasource = ProductRemoteDatasource(httpClient);
-          final repository = ProductRepositoryImpl(datasource);
-          return ProductViewModel(repository);
+          final remoteDatasource = ProductRemoteDatasource(httpClient);
+          final cacheDatasource = ProductCacheDatasource();
+          final repository = ProductRepositoryImpl(remoteDatasource, cacheDatasource);
+          
+          final viewModel = ProductViewModel(repository);
+          
+          viewModel.loadProducts();
+          
+          return viewModel;
         },
         child: const ProductPage(),
       ),
